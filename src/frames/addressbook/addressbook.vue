@@ -47,9 +47,9 @@
 					</router-link>
 				</ul>
 			</div>
-			<div class="contacts_bottom">
-				<ul class="contacts_bottom_ul">
-					<li v-for="(value, key, index) in manageaddress" :key="key" ref="addlist">
+			<div class="contacts_bottom" ref="addlistfather">
+				<ul class="contacts_bottom_ul" ref="addlist">
+					<li v-for="(value, key, index) in manageaddress" :key="key" class="addlistLi" >
 						<h1>{{key}}</h1>
 						<ul>
 							<router-link to="/addressbook/details" tag="li" v-for="(item, index) in value" @click.native='detailMessage(item)'>
@@ -63,15 +63,25 @@
 						</ul>
 					</li>
 				</ul>
-				<section class="list_guide">
-					<dl>
-						<dd v-for="(value, index) in sortlist" :key="index" @click="getHear(value)">{{value}}</dd>
-					</dl>
-					<p>#</p>
+				<section class="guide_wipe">
+					<section class="list_guide">
+						<dl>
+							<dd v-for="(value, index) in sortlist" :key="index" @touchstart="startThing(value)" @touchend="endThing">{{value}}</dd>
+						</dl>
+						<p>#</p>
+					</section>
 				</section>
+				<section class="big-letter" v-if="letter">
+					<div class="letter-bg"></div>
+					<div class="letter">
+						{{atpresent}}
+					</div>
+				</section>
+				<section class="peoplenum">{{peoplenum}}位联系人</section>
 			</div>
+
 		</section>
-		<section class="peoplenum">{{peoplenum}}位联系人</section>
+		
 		<foot-guide></foot-guide>
 		<transition name="router-show">
 			<router-view></router-view>
@@ -83,26 +93,30 @@
 	import headTop from 'src/components/header/head'
 	import footGuide from 'src/components/footer/foot'
 	import {contactList} from 'src/service/getData'
+	import {animate} from 'src/config/mUtils.js'
 	import {mapMutations} from 'vuex'
 	export default{
 		data(){
 			return{
 				contactList:{},		//所有通讯录列表
 				peoplenum:null,		//通讯录人数
+				letter:false,		//字母放大
 			}
 		},
 		created(){
 			
 		},
 		beforeMount(){
-			contactList().then((res) => {
-				this.contactList=res;
-				console.log(this.$refs.addlist)
-			})
+			
+			
 		},
 		mounted(){
-			
-			
+			contactList().then((res) => {
+				this.contactList=res;
+				
+				
+
+			})
 		},
 		components:{
 			headTop,
@@ -139,9 +153,35 @@
 			detailMessage(item){
 				this.SAVE_MESSAGE(item);
 			},
-			getHear(value){
-				console.log(value)
-
+			startThing(value){
+				this.letter=true;
+				this.atpresent=value;
+				this.$nextTick(() =>{ //滚动到通讯录分组的地方
+					const listArray = this.$refs.addlist.getElementsByClassName("addlistLi");
+					const getBody = document.getElementsByTagName("body")[0];
+					for(let i =0; i<listArray.length; i++){
+						if(listArray[i].getElementsByTagName("h1")[0].innerText == value){
+							if(this.$refs.addlistfather.offsetTop+this.$refs.addlistfather.offsetHeight+100 >=listArray[i].offsetTop+document.body.clientHeight){
+								console.log(this.$refs.addlistfather.offsetTop)
+							console.log(this.$refs.addlistfather.offsetHeight)
+							console.log(listArray[i].offsetTop)
+							console.log(document.body.clientHeight)
+								
+							animate(getBody,{scrollTop : listArray[i].offsetTop-50});
+						}else{
+							console.log(1);
+							var scrollval = this.$refs.addlistfather.offsetTop+this.$refs.addlistfather.offsetHeight;
+							animate(getBody,{scrollTop : scrollval});
+						}
+							
+							
+						}
+					}
+					
+				})
+			},
+			endThing(){
+				this.letter=false
 			}
 		}
 	}
@@ -166,7 +206,7 @@
 				-webkit-overflow-scrolling: touch; 
 				.contacts_li{
 					width:100%;
-					padding:0.3413333333rem 0;
+					margin:0.3413333333rem 0;
 					border-bottom:1px solid #e0e0e0;
 					@include justify(flex-start);
 					align-items:center;
@@ -228,19 +268,56 @@
 					}
 				}
 			}
-			.list_guide{
+			.guide_wipe{
 				position: fixed;
-				top:50%;
-				transform:translateY(-50%);
-				right:0.2986666667rem;
-				dl{
-					dd{
+				width:30px;
+				height:100%;
+				top:0;
+				right:0;
+				.list_guide{
+					position: fixed;
+					z-index:10;
+					top:50%;
+					transform:translateY(-50%);
+					right:0.2986666667rem;
+					dl{
+						dd{
+							@include sizeColor(0.58rem,#585858);
+							text-align:center;
+						}
+					}
+					p{
 						@include sizeColor(0.54rem,#585858);
-						text-align:center;
 					}
 				}
-				p{
-					@include sizeColor(0.54rem,#585858);
+			}
+			
+			.big-letter{
+				position: fixed;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%); 
+				width:3.3706666667rem;
+				height:3.3706666667rem;
+				.letter-bg{
+					position: absolute;
+					top:0;
+					left:0;
+					width:3.3706666667rem;
+					height:3.3706666667rem;
+					background:#000;
+					opacity: .6;
+					border-radius:5px;
+				}
+				.letter{
+					position: relative;
+					z-index: 10;
+					width:3.3706666667rem;
+					line-height:3.3706666667rem;
+					text-align:center;
+					font-size:2rem;
+					color:#fff;
+					font-family:SimSun !important;
 				}
 			}
 		}
